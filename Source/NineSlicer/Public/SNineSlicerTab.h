@@ -44,6 +44,7 @@ public:
 	virtual FReply OnMouseButtonDown(const FGeometry& MyGeometry, const FPointerEvent& MouseEvent) override;
 	virtual FReply OnMouseButtonUp(const FGeometry& MyGeometry, const FPointerEvent& MouseEvent) override;
 	virtual FReply OnMouseMove(const FGeometry& MyGeometry, const FPointerEvent& MouseEvent) override;
+	virtual TOptional<EMouseCursor::Type> GetCursor() const override;
 
 	FVector2D AbsolutePositionToPercentage(const FVector2D& AbsolutePosition) const;
 	FVector2D PercentageToAbsolutePosition(const FVector2D& Percentage) const;
@@ -59,4 +60,5 @@ public:
 
 	TOptional<EHandlePosition> HandleEdited;
 	FScopedTransaction* ScopedTransaction;
+	float MaxGrabDistance = 0.001f;
 };

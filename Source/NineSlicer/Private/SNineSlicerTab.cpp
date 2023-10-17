@@ -1,4 +1,4 @@
-﻿// Fill out your copyright notice in the Description page of Project Settings.
+// Fill out your copyright notice in the Description page of Project Settings.
 
 
 #include "SNineSlicerTab.h"
@@ -46,7 +46,7 @@ UImage* SNineSlicerTab::GetCurrentImage() const
 		return nullptr;
 	}
 
-	const FWidgetReference& SelectedWidget = SelectedWidgets.Array()[0];
+	FWidgetReference SelectedWidget = SelectedWidgets.Array()[0];
 
 	UWidget* Widget = SelectedWidget.GetTemplate();
 	return Cast<UImage>(Widget);
@@ -221,6 +221,23 @@ FReply SNineSlicerTab::OnMouseMove(const FGeometry& MyGeometry, const FPointerEv
 	return FReply::Unhandled();
 }
 
+TOptional<EMouseCursor::Type> SNineSlicerTab::GetCursor() const
+{
+	if (HandleEdited.IsSet())
+	{
+		return EMouseCursor::GrabHandClosed;
+	}
+
+	const FVector2D MousePosition = AbsolutePositionToPercentage(FSlateApplication::Get().GetCursorPos());
+	const TOptional<EHandlePosition> NearbyHandle = GetClosestHandle(MousePosition);
+	if(NearbyHandle.IsSet())
+	{
+		return EMouseCursor::GrabHand;
+	}
+
+	return SCompoundWidget::GetCursor();
+}
+
 FVector2D SNineSlicerTab::AbsolutePositionToPercentage(const FVector2D& AbsolutePosition) const
 {
 	const FVector2D WidgetSize = ViewCanvas->GetCachedGeometry().GetLocalSize();
@@ -314,7 +331,7 @@ TOptional<EHandlePosition> SNineSlicerTab::GetClosestHandle(FVector2D MousePosit
 	CurrentPositions.Emplace(EHandlePosition::Bottom, GetHandlePosition(EHandlePosition::Bottom));
 	CurrentPositions.Emplace(EHandlePosition::Right, GetHandlePosition(EHandlePosition::Right));
 
-	double MinDistance = TNumericLimits<double>::Max();
+	double MinDistance = MaxGrabDistance;
 	TOptional<EHandlePosition> Result;
 
 	for (const TTuple<EHandlePosition, FVector2D>& Position : CurrentPositions)
