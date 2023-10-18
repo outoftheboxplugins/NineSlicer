@@ -39,7 +39,7 @@ public class NineSlicer : ModuleRules
 				"Engine",
 				"Slate",
 				"SlateCore",
-				"ToolMenus", "UMGEditor", "Kismet", "UMG"
+				"ToolMenus", "UMGEditor", "Kismet", "UMG", "DeveloperSettings", "InputCore"
 				// ... add private dependencies that you statically link with here ...	
 			}
 			);

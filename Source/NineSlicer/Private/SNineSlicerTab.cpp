@@ -4,6 +4,7 @@
 #include "SNineSlicerTab.h"
 
 #include "Components/Image.h"
+#include "NineSlicerSettings.h"
 #include "ObjectEditorUtils.h"
 #include "SlateOptMacros.h"
 #include "WidgetBlueprintEditor.h"
@@ -13,6 +14,7 @@
 
 void SNineSlicerTab::AddSlot(TDelegate<FVector2D()> GetCoordinates)
 {
+	
 	// clang-format off
 	SCanvas::FScopedWidgetSlotArguments NewSlot = ViewCanvas->AddSlot();
 	NewSlot
@@ -26,10 +28,13 @@ void SNineSlicerTab::AddSlot(TDelegate<FVector2D()> GetCoordinates)
 				return FVector2D(CanvasSize.X * Coords.X, CanvasSize.Y * Coords.Y) -  Offset;
 			})
 		[
-			// TODO: This is pivoted at top right, replace image or pivot it in the middle
 			SNew(SImage)
 			.Image(FAppStyle::Get().GetBrush("UMGEditor.TransformHandle"))
-			.ColorAndOpacity(FLinearColor::Red)
+			.ColorAndOpacity_Lambda([]()
+			{
+				const UNineSlicerSettings* Settings = GetDefault<UNineSlicerSettings>();
+				return Settings->DrawColor;
+			})
 		];
 	// clang-format on
 }
@@ -132,6 +137,8 @@ int32 SNineSlicerTab::OnPaint(
 {
 	SCompoundWidget::OnPaint(Args, AllottedGeometry, MyCullingRect, OutDrawElements, LayerId, InWidgetStyle, bParentEnabled);
 
+	const UNineSlicerSettings* Settings = GetDefault<UNineSlicerSettings>();
+
 	const FVector2D UpperLeftCornerPercentage = FVector2D(GetHandlePosition(EHandlePosition::Left).X, GetHandlePosition(EHandlePosition::Top).Y);
 	const FVector2D BottomRightCornerPercentage = FVector2D(GetHandlePosition(EHandlePosition::Right).X, GetHandlePosition(EHandlePosition::Bottom).Y);
 
@@ -140,7 +147,7 @@ int32 SNineSlicerTab::OnPaint(
 
 	auto DrawLine = [&](FVector2D Start, FVector2D Finish)
 	{
-		FSlateDrawElement::MakeLines(OutDrawElements, ++LayerId, AllottedGeometry.ToPaintGeometry(), TArray({Start, Finish}), ESlateDrawEffect::None, FLinearColor::Red);
+		FSlateDrawElement::MakeLines(OutDrawElements, ++LayerId, AllottedGeometry.ToPaintGeometry(), TArray({Start, Finish}), ESlateDrawEffect::None, Settings->DrawColor);
 	};
 
 	{
@@ -250,6 +257,8 @@ FVector2D SNineSlicerTab::PercentageToAbsolutePosition(const FVector2D& Percenta
 void SNineSlicerTab::SetHandePosition(EHandlePosition Handle, FVector2D InValue)
 {
 	// TODO: don't let left cross top or top cross bottom
+	// TODO: Allow color in settings
+	// TODO: Allow setting a precision in the settings
 	UImage* Image = GetCurrentImage();
 	if (!Image)
 	{

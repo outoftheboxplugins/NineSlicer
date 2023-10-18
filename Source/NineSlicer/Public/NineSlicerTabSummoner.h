@@ -2,7 +2,6 @@
 
 #pragma once
 
-
 #include "WorkflowOrientedApp/WorkflowTabFactory.h"
 
 class FWidgetBlueprintEditor;
@@ -13,7 +12,10 @@ struct FMVVMBindingSummoner : public FWorkflowTabFactory
 	static const FName DrawerID;
 
 	FMVVMBindingSummoner(TSharedPtr<FWidgetBlueprintEditor> BlueprintEditor, bool bInIsDrawerTab = false);
+	FReply SetUserColor(FLinearColor Color) const;
 
+	int32 GetPrecision() const;
+	void OnPrecisionChanged(int32 InValue) const;
 	virtual TSharedRef<SWidget> CreateTabBody(const FWorkflowTabSpawnInfo& Info) const override;
 
 private:
