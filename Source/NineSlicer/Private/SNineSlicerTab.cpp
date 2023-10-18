@@ -180,6 +180,7 @@ FReply SNineSlicerTab::OnMouseButtonDown(const FGeometry& MyGeometry, const FPoi
 	return FReply::Handled();
 }
 
+// TODO: Also stop dragging when the mouse leaves the box?
 FReply SNineSlicerTab::OnMouseButtonUp(const FGeometry& MyGeometry, const FPointerEvent& MouseEvent)
 {
 	HandleEdited.Reset();

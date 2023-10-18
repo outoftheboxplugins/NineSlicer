@@ -26,10 +26,14 @@ FMVVMBindingSummoner::FMVVMBindingSummoner(TSharedPtr<FWidgetBlueprintEditor> Bl
 TSharedRef<SWidget> FMVVMBindingSummoner::CreateTabBody(const FWorkflowTabSpawnInfo& Info) const
 {
 	// clang-format off
-	return SNew(SScaleBox)
-		.Stretch(EStretch::ScaleToFit)
+	return SNew(SBox)
+		.Padding(FMargin(5))
 		[
-			SNew(SNineSlicerTab, WeakWidgetBlueprintEditor.Pin())
+			SNew(SScaleBox)
+			.Stretch(EStretch::ScaleToFit)
+			[
+				SNew(SNineSlicerTab, WeakWidgetBlueprintEditor.Pin())
+			]
 		];
 	// clang-format on
 }
