@@ -248,7 +248,6 @@ FVector2D SNineSlicerTab::PercentageToAbsolutePosition(const FVector2D& Percenta
 
 void SNineSlicerTab::SetHandePosition(EHandlePosition Handle, FVector2D InValue)
 {
-	// TODO: Clamp everything between 0-1
 	// TODO: don't let left cross top or top cross bottom
 	UImage* Image = GetCurrentImage();
 	if (!Image)
@@ -260,19 +259,19 @@ void SNineSlicerTab::SetHandePosition(EHandlePosition Handle, FVector2D InValue)
 
 	if (Handle == EHandlePosition::Top)
 	{
-		Brush.Margin.Top = InValue.Y;
+		Brush.Margin.Top = FMath::Clamp(InValue.Y, 0, 1);
 	}
 	if (Handle == EHandlePosition::Left)
 	{
-		Brush.Margin.Left = InValue.X;
+		Brush.Margin.Left = FMath::Clamp(InValue.X, 0, 1);
 	}
 	if (Handle == EHandlePosition::Bottom)
 	{
-		Brush.Margin.Bottom = 1.0 - InValue.Y;
+		Brush.Margin.Bottom = FMath::Clamp(1.0 - InValue.Y, 0, 1);
 	}
 	if (Handle == EHandlePosition::Right)
 	{
-		Brush.Margin.Right = 1.0 - InValue.X;
+		Brush.Margin.Right = FMath::Clamp(1.0 - InValue.X, 0, 1);
 	}
 
 	Image->SetFlags(RF_Transactional);
