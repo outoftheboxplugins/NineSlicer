@@ -63,24 +63,20 @@ void SNineSlicerTab::Construct(const FArguments& InArgs, TSharedPtr<FWidgetBluep
 	// clang-format off
 	ChildSlot
 	[
-		SNew(SScaleBox)
-		.Stretch(EStretch::ScaleToFit)
+		SNew(SOverlay)
+		+SOverlay::Slot()
+		.VAlign(VAlign_Fill)
+		.HAlign(HAlign_Fill)
 		[
-			SNew(SOverlay)
-			+SOverlay::Slot()
-			.VAlign(VAlign_Fill)
-			.HAlign(HAlign_Fill)
-			[
-				SNew(SImage)
-				.Image(&CurrentData)
-			]
+			SNew(SImage)
+			.Image(&CurrentData)
+		]
 
-			+SOverlay::Slot()
-			.VAlign(VAlign_Fill)
-			.HAlign(HAlign_Fill)
-			[
-				SAssignNew(ViewCanvas, SCanvas)
-			]
+		+SOverlay::Slot()
+		.VAlign(VAlign_Fill)
+		.HAlign(HAlign_Fill)
+		[
+			SAssignNew(ViewCanvas, SCanvas)
 		]
 	];
 	// clang-format on
@@ -136,26 +132,15 @@ int32 SNineSlicerTab::OnPaint(
 {
 	SCompoundWidget::OnPaint(Args, AllottedGeometry, MyCullingRect, OutDrawElements, LayerId, InWidgetStyle, bParentEnabled);
 
-	// TODO: Find a better workaround
-	LayerId = LayerId + 100000;
-
-	const FVector2D CanvasSize = ViewCanvas->GetCachedGeometry().GetAbsoluteSize();
-
-	const FVector2D WidgetPosition = AllottedGeometry.GetAbsolutePosition();
-	const FVector2D CanvasPosition = ViewCanvas->GetPaintSpaceGeometry().GetAbsolutePosition();
-	const FVector2D WidgetToCanvas = -WidgetPosition + CanvasPosition;
-
 	const FVector2D UpperLeftCornerPercentage = FVector2D(GetHandlePosition(EHandlePosition::Left).X, GetHandlePosition(EHandlePosition::Top).Y);
-	const FVector2D UpperLeftCornerCanvasSpace = FVector2D(CanvasSize.X * UpperLeftCornerPercentage.X, CanvasSize.Y * UpperLeftCornerPercentage.Y);
-	const FVector2D UpperLeftCornerWidgetSpace = UpperLeftCornerCanvasSpace + WidgetToCanvas;
-
 	const FVector2D BottomRightCornerPercentage = FVector2D(GetHandlePosition(EHandlePosition::Right).X, GetHandlePosition(EHandlePosition::Bottom).Y);
-	const FVector2D BottomRightCornerCanvasSpace = FVector2D(CanvasSize.X * BottomRightCornerPercentage.X, CanvasSize.Y * BottomRightCornerPercentage.Y);
-	const FVector2D BottomRightCornerWidgetSpace = BottomRightCornerCanvasSpace + WidgetToCanvas;
+
+	const FVector2D UpperLeftCornerWidgetSpace = AllottedGeometry.GetLocalSize() * UpperLeftCornerPercentage;
+	const FVector2D BottomRightCornerWidgetSpace = AllottedGeometry.GetLocalSize() * BottomRightCornerPercentage;
 
 	auto DrawLine = [&](FVector2D Start, FVector2D Finish)
 	{
-		FSlateDrawElement::MakeLines(OutDrawElements, LayerId++, AllottedGeometry.ToPaintGeometry(), TArray({Start, Finish}), ESlateDrawEffect::None, FLinearColor::Red);
+		FSlateDrawElement::MakeLines(OutDrawElements, ++LayerId, AllottedGeometry.ToPaintGeometry(), TArray({Start, Finish}), ESlateDrawEffect::None, FLinearColor::Red);
 	};
 
 	{

@@ -5,6 +5,7 @@
 #include "SNineSlicerTab.h"
 #include "StatusBarSubsystem.h"
 #include "WidgetBlueprintEditor.h"
+#include "Widgets/Layout/SScaleBox.h"
 
 #define LOCTEXT_NAMESPACE "TabSummoner"
 
@@ -24,7 +25,13 @@ FMVVMBindingSummoner::FMVVMBindingSummoner(TSharedPtr<FWidgetBlueprintEditor> Bl
 
 TSharedRef<SWidget> FMVVMBindingSummoner::CreateTabBody(const FWorkflowTabSpawnInfo& Info) const
 {
-	return SNew(SNineSlicerTab, WeakWidgetBlueprintEditor.Pin());
+	// clang-format off
+	return SNew(SScaleBox)
+		.Stretch(EStretch::ScaleToFit)
+		[
+			SNew(SNineSlicerTab, WeakWidgetBlueprintEditor.Pin())
+		];
+	// clang-format on
 }
 
 #undef LOCTEXT_NAMESPACE
