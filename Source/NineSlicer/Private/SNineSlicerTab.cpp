@@ -19,11 +19,14 @@ void SNineSlicerTab::AddSlot(TDelegate<FVector2D()> GetCoordinates)
 		.Size(FVector2D(1, 1))
 		.Position_Lambda( [=, this]()
 			{
+				const FVector2D Offset = {0.5, 0.5};
+				
 				const FVector2D Coords = GetCoordinates.Execute();
 				const FVector2D CanvasSize = ViewCanvas->GetCachedGeometry().GetLocalSize();
-				return FVector2D(CanvasSize.X * Coords.X, CanvasSize.Y * Coords.Y);
+				return FVector2D(CanvasSize.X * Coords.X, CanvasSize.Y * Coords.Y) -  Offset;
 			})
 		[
+			// TODO: This is pivoted at top right, replace image or pivot it in the middle
 			SNew(SImage)
 			.Image(FAppStyle::Get().GetBrush("UMGEditor.TransformHandle"))
 			.ColorAndOpacity(FLinearColor::Red)
@@ -260,6 +263,8 @@ FVector2D SNineSlicerTab::PercentageToAbsolutePosition(const FVector2D& Percenta
 
 void SNineSlicerTab::SetHandePosition(EHandlePosition Handle, FVector2D InValue)
 {
+	// TODO: Clamp everything between 0-1
+	// TODO: don't let left cross top or top cross bottom
 	UImage* Image = GetCurrentImage();
 	if (!Image)
 	{
