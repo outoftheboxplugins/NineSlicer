@@ -12,6 +12,12 @@
 #include "Widgets/Layout/SScaleBox.h"
 #include "Widgets/SCanvas.h"
 
+double RoundDecimal(double InNumber, int32 Decimals)
+{
+	const double Multiplier = FMath::Pow(10.0, Decimals);
+	return FMath::CeilToDouble(InNumber * Multiplier) / Multiplier;
+}
+
 void SNineSlicerTab::AddSlot(TDelegate<FVector2D()> GetCoordinates)
 {
 	
@@ -257,8 +263,6 @@ FVector2D SNineSlicerTab::PercentageToAbsolutePosition(const FVector2D& Percenta
 void SNineSlicerTab::SetHandePosition(EHandlePosition Handle, FVector2D InValue)
 {
 	// TODO: don't let left cross top or top cross bottom
-	// TODO: Allow color in settings
-	// TODO: Allow setting a precision in the settings
 	UImage* Image = GetCurrentImage();
 	if (!Image)
 	{
@@ -266,6 +270,13 @@ void SNineSlicerTab::SetHandePosition(EHandlePosition Handle, FVector2D InValue)
 	}
 
 	auto Brush = Image->GetBrush();
+
+	const UNineSlicerSettings* Settings = GetDefault<UNineSlicerSettings>();
+	const auto Precision = Settings->DecimalPrecision;
+	if(Precision > 0)
+	{
+		InValue = FVector2D(RoundDecimal(InValue.X, Precision), RoundDecimal(InValue.Y, Precision));
+	}
 
 	if (Handle == EHandlePosition::Top)
 	{

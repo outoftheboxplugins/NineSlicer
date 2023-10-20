@@ -15,9 +15,11 @@ class NINESLICER_API UNineSlicerSettings : public UDeveloperSettings
 	GENERATED_BODY()
 
 public:
+	static void OpenSettings();
+
 	UPROPERTY(Config, EditAnywhere, Category="Nine Slicer")
 	FLinearColor DrawColor = FLinearColor::Green;
 
 	UPROPERTY(Config, EditAnywhere, Category="Nine Slicer", meta = (UIMin = "0", UIMax = "10"))
-	int32 DecimalPrecision;
+	int32 DecimalPrecision = 2;
 };

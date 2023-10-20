@@ -16,6 +16,7 @@ struct FMVVMBindingSummoner : public FWorkflowTabFactory
 
 	int32 GetPrecision() const;
 	void OnPrecisionChanged(int32 InValue) const;
+	FReply OpenSettings() const;
 	virtual TSharedRef<SWidget> CreateTabBody(const FWorkflowTabSpawnInfo& Info) const override;
 
 private:

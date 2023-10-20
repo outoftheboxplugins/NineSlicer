@@ -47,6 +47,13 @@ void FMVVMBindingSummoner::OnPrecisionChanged(int32 InValue) const
 	Settings->SaveConfig();
 }
 
+FReply FMVVMBindingSummoner::OpenSettings() const
+{
+	UNineSlicerSettings::OpenSettings();
+
+	return FReply::Handled();
+}
+
 TSharedRef<SWidget> FMVVMBindingSummoner::CreateTabBody(const FWorkflowTabSpawnInfo& Info) const
 {
 	// clang-format off
@@ -59,24 +66,6 @@ TSharedRef<SWidget> FMVVMBindingSummoner::CreateTabBody(const FWorkflowTabSpawnI
 			.AutoHeight()
 			[
 				SNew(SHorizontalBox)
-
-				+ SHorizontalBox::Slot()
-				.AutoWidth()
-				[
-					SNew(SSpinBox<int32>)
-						.MinValue(0)
-						.MaxValue(10)
-						.MinSliderValue(0)
-						.MaxSliderValue(10)
-						.Delta(1)
-						.Value(this, &FMVVMBindingSummoner::GetPrecision)
-						.OnValueChanged(this, &FMVVMBindingSummoner::OnPrecisionChanged)
-				]
-				
-				+ SHorizontalBox::Slot()
-				[
-					SNew(SSpacer)
-				]
 
 				+ SHorizontalBox::Slot()
 				.AutoWidth()
@@ -106,6 +95,22 @@ TSharedRef<SWidget> FMVVMBindingSummoner::CreateTabBody(const FWorkflowTabSpawnI
 					[
 						SNew(SImage)
 						.ColorAndOpacity(FLinearColor::Blue)
+					]
+				]
+
+				+ SHorizontalBox::Slot()
+				[
+					SNew(SSpacer)
+				]
+
+				+ SHorizontalBox::Slot()
+				.AutoWidth()
+				[
+					SNew(SButton)
+					.OnClicked(this, &FMVVMBindingSummoner::OpenSettings)
+					[
+						SNew(SImage)
+						.Image(FAppStyle::Get().GetBrush("Icons.Settings"))
 					]
 				]
 			]
