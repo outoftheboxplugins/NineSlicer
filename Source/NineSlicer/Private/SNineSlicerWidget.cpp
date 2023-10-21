@@ -1,6 +1,6 @@
 // Copyright Out-of-the-Box Plugins 2018-2023. All Rights Reserved.
 
-#include "NineSlicerWidget.h"
+#include "SNineSlicerWidget.h"
 
 #include <Components/Image.h>
 #include <ObjectEditorUtils.h>
@@ -9,6 +9,7 @@
 #include <WidgetReference.h>
 #include <Widgets/SCanvas.h>
 
+#include "NineSlicerInputProcessor.h"
 #include "NineSlicerSettings.h"
 
 // TODO: We should have a preview mode where we display how each segment gets scaled (e.g.: middle = all directions, upper left = none, middle left = only vertically)
@@ -70,6 +71,18 @@ void SNineSlicerWidget::Construct(const FArguments& InArgs, const TWeakPtr<FWidg
 SNineSlicerWidget::~SNineSlicerWidget()
 {
 	FSlateApplication::Get().UnregisterInputPreProcessor(InputProcessor);
+}
+
+void SNineSlicerWidget::ResetMargins()
+{
+	// TODO: Investigate undoing this.
+
+	SetHandlePosition(EHandlePosition::Top, {0, 0});
+	SetHandlePosition(EHandlePosition::Left, {0, 0});
+	SetHandlePosition(EHandlePosition::Bottom, {1, 1});
+	SetHandlePosition(EHandlePosition::Right, {1, 1});
+
+	WeakBlueprintEditor.Pin()->RefreshPreview();
 }
 
 void SNineSlicerWidget::AddMarginHandle(EHandlePosition Handle)
@@ -175,7 +188,7 @@ TOptional<EHandlePosition> SNineSlicerWidget::GetClosestHandle(FVector2D Absolut
 	return Result;
 }
 
-void SNineSlicerWidget::SetHandePosition(EHandlePosition Handle, FVector2D InValue)
+void SNineSlicerWidget::SetHandlePosition(EHandlePosition Handle, FVector2D InValue)
 {
 	UImage* Image = GetCurrentImage();
 	if (!Image)
@@ -211,9 +224,6 @@ void SNineSlicerWidget::SetHandePosition(EHandlePosition Handle, FVector2D InVal
 
 	Image->SetFlags(RF_Transactional);
 	Image->Modify();
-
-	static const FName BrushPropertyName(TEXT("Brush"));
-	FObjectEditorUtils::SetPropertyValue<UImage, FSlateBrush>(Image, BrushPropertyName, Brush);
 	Image->SetBrush(Brush);
 }
 
@@ -314,7 +324,7 @@ bool SNineSlicerWidget::OnProcessorMouseMove(const FPointerEvent& MouseEvent)
 	}
 
 	const FVector2D MousePosition = AbsolutePositionToPercentage(FSlateApplication::Get().GetCursorPos());
-	SetHandePosition(HandleEdited.GetValue(), MousePosition);
+	SetHandlePosition(HandleEdited.GetValue(), MousePosition);
 
 	return true;
 }

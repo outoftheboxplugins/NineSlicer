@@ -38,6 +38,11 @@ public:
 	 */
 	virtual ~SNineSlicerWidget() override;
 
+	/**
+	 * Reset the current image's margins to the default value
+	 */
+	void ResetMargins();
+
 private:
 	/**
 	 * Draws an interactable handle at the position of the Handle in the main canvas
@@ -58,7 +63,7 @@ private:
 	/**
 	 * Updates the matching margin property based on an interactable handle
 	 */
-	void SetHandePosition(EHandlePosition Handle, FVector2D InValue);
+	void SetHandlePosition(EHandlePosition Handle, FVector2D InValue);
 	/**
 	 * Transforms an absolute position into a percentage
 	 */
