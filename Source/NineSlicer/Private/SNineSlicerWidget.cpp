@@ -75,7 +75,7 @@ SNineSlicerWidget::~SNineSlicerWidget()
 
 void SNineSlicerWidget::ResetMargins()
 {
-	// TODO: Investigate undoing this.
+	FScopedTransaction ResetTransaction(LOCTEXT("NineSlicerReset", "Nine Slicer Reset"));
 
 	SetHandlePosition(EHandlePosition::Top, {0, 0});
 	SetHandlePosition(EHandlePosition::Left, {0, 0});
@@ -340,7 +340,7 @@ bool SNineSlicerWidget::OnProcessorMouseButtonDown(const FPointerEvent& MouseEve
 
 	if (ensure(!ScopedTransaction.IsValid()))
 	{
-		ScopedTransaction = MakeShared<FScopedTransaction>(INVTEXT("Nine Slicer Adjustement"));
+		ScopedTransaction = MakeShared<FScopedTransaction>(LOCTEXT("NineSlicerAdjustement", "Nine Slicer Adjustement"));
 	}
 
 	return true;
