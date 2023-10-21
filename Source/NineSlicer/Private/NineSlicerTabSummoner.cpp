@@ -43,7 +43,7 @@ TSharedRef<SWidget> FNineSlicerSummoner::CreateTabBody(const FWorkflowTabSpawnIn
 {
 	// clang-format off
 	return SNew(SBox)
-		.Padding(FMargin(5))
+		.Padding(FMargin(10))
 		[
 			SNew(SVerticalBox)
 
@@ -105,7 +105,7 @@ TSharedRef<SWidget> FNineSlicerSummoner::CreateTabBody(const FWorkflowTabSpawnIn
 				SNew(SScaleBox)
 				.Stretch(EStretch::ScaleToFit)
 				[
-					SNew(SNineSlicerTab, WeakWidgetBlueprintEditor.Pin())
+					SNew(SNineSlicerTab, WeakWidgetBlueprintEditor)
 				]
 			]
 		];

@@ -12,6 +12,10 @@
 #include "NineSlicerSettings.h"
 
 // TODO: We should have a preview mode where we display how each segment gets scaled (e.g.: middle = all directions, upper left = none, middle left = only vertically)
+// TODO: Better handling for dragging over edges
+// TODO: Show a "please select a ninesliceable image - box or order" message when not good widget is selected
+
+#define LOCTEXT_NAMESPACE "NineSlicer"
 
 /**
  * Helper function to truncate a double's decimals
@@ -22,7 +26,7 @@ double RoundDecimal(double InNumber, int32 Decimals)
 	return FMath::CeilToDouble(InNumber * Multiplier) / Multiplier;
 }
 
-void SNineSlicerTab::Construct(const FArguments& InArgs, TSharedPtr<FWidgetBlueprintEditor> InBlueprintEditor)
+void SNineSlicerTab::Construct(const FArguments& InArgs, const TWeakPtr<FWidgetBlueprintEditor>& InBlueprintEditor)
 {
 	WeakBlueprintEditor = InBlueprintEditor;
 
@@ -47,33 +51,13 @@ void SNineSlicerTab::Construct(const FArguments& InArgs, TSharedPtr<FWidgetBluep
 	];
 	// clang-format on
 
-	AddSlot(TDelegate<FVector2D()>::CreateLambda(
-		[this]()
-		{
-			return GetHandlePosition(EHandlePosition::Top);
-		}
-	));
-	AddSlot(TDelegate<FVector2D()>::CreateLambda(
-		[this]()
-		{
-			return GetHandlePosition(EHandlePosition::Left);
-		}
-	));
-	AddSlot(TDelegate<FVector2D()>::CreateLambda(
-		[this]()
-		{
-			return GetHandlePosition(EHandlePosition::Bottom);
-		}
-	));
-	AddSlot(TDelegate<FVector2D()>::CreateLambda(
-		[this]()
-		{
-			return GetHandlePosition(EHandlePosition::Right);
-		}
-	));
+	AddMarginHandle(EHandlePosition::Top);
+	AddMarginHandle(EHandlePosition::Left);
+	AddMarginHandle(EHandlePosition::Bottom);
+	AddMarginHandle(EHandlePosition::Right);
 }
 
-void SNineSlicerTab::AddSlot(TDelegate<FVector2D()> GetCoordinates)
+void SNineSlicerTab::AddMarginHandle(EHandlePosition Handle)
 {
 	// clang-format off
 	SCanvas::FScopedWidgetSlotArguments NewSlot = ViewCanvas->AddSlot();
@@ -81,9 +65,9 @@ void SNineSlicerTab::AddSlot(TDelegate<FVector2D()> GetCoordinates)
 		.Size(FVector2D(1, 1))
 		.Position_Lambda( [=, this]()
 			{
-				const FVector2D Offset = {0.5, 0.5};
-				
-				const FVector2D Coords = GetCoordinates.Execute();
+				constexpr FVector2D Offset = {0.5, 0.5};
+
+				const FVector2D Coords = GetHandlePosition(Handle);
 				const FVector2D CanvasSize = ViewCanvas->GetCachedGeometry().GetLocalSize();
 				return FVector2D(CanvasSize.X * Coords.X, CanvasSize.Y * Coords.Y) -  Offset;
 			})
@@ -98,7 +82,6 @@ void SNineSlicerTab::AddSlot(TDelegate<FVector2D()> GetCoordinates)
 		];
 	// clang-format on
 }
-
 
 UImage* SNineSlicerTab::GetCurrentImage() const
 {
@@ -118,6 +101,116 @@ UImage* SNineSlicerTab::GetCurrentImage() const
 
 	UWidget* Widget = SelectedWidget.GetTemplate();
 	return Cast<UImage>(Widget);
+}
+
+FVector2D SNineSlicerTab::GetHandlePosition(EHandlePosition Handle) const
+{
+	if (Handle == EHandlePosition::Top)
+	{
+		constexpr float X = 0.5;
+		const float Y = CurrentData.Margin.Top;
+		return FVector2D(X, Y);
+	}
+	if (Handle == EHandlePosition::Left)
+	{
+		const float X = CurrentData.Margin.Left;
+		constexpr float Y = 0.5;
+		return FVector2D(X, Y);
+	}
+	if (Handle == EHandlePosition::Bottom)
+	{
+		constexpr float X = 0.5;
+		const float Y = 1.0 - CurrentData.Margin.Bottom;
+		return FVector2D(X, Y);
+	}
+	if (Handle == EHandlePosition::Right)
+	{
+		const float X = 1.0 - CurrentData.Margin.Right;
+		constexpr float Y = 0.5;
+		return FVector2D(X, Y);
+	}
+
+	return FVector2D::ZeroVector;
+}
+
+TOptional<EHandlePosition> SNineSlicerTab::GetClosestHandle(FVector2D AbsolutePosition) const
+{
+	constexpr float MaxGrabDistance = 0.001f;
+	const FVector2D PercentagePosition = AbsolutePositionToPercentage(AbsolutePosition);
+
+	TMap<EHandlePosition, FVector2D> CurrentPositions;
+	CurrentPositions.Emplace(EHandlePosition::Top, GetHandlePosition(EHandlePosition::Top));
+	CurrentPositions.Emplace(EHandlePosition::Left, GetHandlePosition(EHandlePosition::Left));
+	CurrentPositions.Emplace(EHandlePosition::Bottom, GetHandlePosition(EHandlePosition::Bottom));
+	CurrentPositions.Emplace(EHandlePosition::Right, GetHandlePosition(EHandlePosition::Right));
+
+	double MinDistance = MaxGrabDistance;
+	TOptional<EHandlePosition> Result;
+
+	for (const TTuple<EHandlePosition, FVector2D>& Position : CurrentPositions)
+	{
+		const double Distance = FVector2D::DistSquared(Position.Value, PercentagePosition);
+		if (Distance < MinDistance)
+		{
+			MinDistance = Distance;
+			Result = Position.Key;
+		}
+	}
+
+	return Result;
+}
+
+void SNineSlicerTab::SetHandePosition(EHandlePosition Handle, FVector2D InValue)
+{
+	// TODO: don't let left cross top or top cross bottom
+	UImage* Image = GetCurrentImage();
+	if (!Image)
+	{
+		return;
+	}
+
+	auto Brush = Image->GetBrush();
+
+	const UNineSlicerSettings* Settings = GetDefault<UNineSlicerSettings>();
+	const auto Precision = Settings->DecimalPrecision;
+	if (Precision > 0)
+	{
+		InValue = FVector2D(RoundDecimal(InValue.X, Precision), RoundDecimal(InValue.Y, Precision));
+	}
+
+	if (Handle == EHandlePosition::Top)
+	{
+		Brush.Margin.Top = FMath::Clamp(InValue.Y, 0, 1);
+	}
+	if (Handle == EHandlePosition::Left)
+	{
+		Brush.Margin.Left = FMath::Clamp(InValue.X, 0, 1);
+	}
+	if (Handle == EHandlePosition::Bottom)
+	{
+		Brush.Margin.Bottom = FMath::Clamp(1.0 - InValue.Y, 0, 1);
+	}
+	if (Handle == EHandlePosition::Right)
+	{
+		Brush.Margin.Right = FMath::Clamp(1.0 - InValue.X, 0, 1);
+	}
+
+	Image->SetFlags(RF_Transactional);
+	Image->Modify();
+
+	static const FName BrushPropertyName(TEXT("Brush"));
+	FObjectEditorUtils::SetPropertyValue<UImage, FSlateBrush>(Image, BrushPropertyName, Brush);
+	Image->SetBrush(Brush);
+}
+
+FVector2D SNineSlicerTab::AbsolutePositionToPercentage(const FVector2D& AbsolutePosition) const
+{
+	const FVector2D WidgetSize = ViewCanvas->GetCachedGeometry().GetLocalSize();
+	const FVector2D WidgetSpace = ViewCanvas->GetCachedGeometry().AbsoluteToLocal(AbsolutePosition);
+	double PosX = WidgetSpace.X / WidgetSize.X;
+	double PosY = WidgetSpace.Y / WidgetSize.Y;
+
+	return {PosX, PosY};
 }
 
 void SNineSlicerTab::Tick(const FGeometry& AllottedGeometry, const double InCurrentTime, const float InDeltaTime)
@@ -184,12 +277,11 @@ int32 SNineSlicerTab::OnPaint(
 
 FReply SNineSlicerTab::OnMouseButtonDown(const FGeometry& MyGeometry, const FPointerEvent& MouseEvent)
 {
-	const FVector2D MousePosition = AbsolutePositionToPercentage(MouseEvent.GetScreenSpacePosition());
-	HandleEdited = GetClosestHandle(MousePosition);
+	HandleEdited = GetClosestHandle(MouseEvent.GetScreenSpacePosition());
 
-	if (ScopedTransaction == nullptr)
+	if (ensure(!ScopedTransaction.IsValid()))
 	{
-		ScopedTransaction = new FScopedTransaction(INVTEXT("Test"));
+		ScopedTransaction = MakeShared<FScopedTransaction>(INVTEXT("TODO"));
 	}
 
 	return FReply::Handled();
@@ -208,7 +300,6 @@ FReply SNineSlicerTab::OnMouseButtonUp(const FGeometry& MyGeometry, const FPoint
 
 	WeakBlueprintEditor.Pin()->RefreshPreview();
 
-
 	return FReply::Handled();
 }
 
@@ -220,8 +311,6 @@ FReply SNineSlicerTab::OnMouseMove(const FGeometry& MyGeometry, const FPointerEv
 		SetHandePosition(HandleEdited.GetValue(), MousePosition);
 	}
 
-	UE_LOG(LogTemp, Warning, TEXT("Mouse positino: %s %s"), *LexToString(MouseEvent.GetScreenSpacePosition().X), *LexToString(MouseEvent.GetScreenSpacePosition().Y));
-
 	return FReply::Unhandled();
 }
 
@@ -232,7 +321,7 @@ TOptional<EMouseCursor::Type> SNineSlicerTab::GetCursor() const
 		return EMouseCursor::GrabHandClosed;
 	}
 
-	const FVector2D MousePosition = AbsolutePositionToPercentage(FSlateApplication::Get().GetCursorPos());
+	const FVector2D MousePosition = FSlateApplication::Get().GetCursorPos();
 	const TOptional<EHandlePosition> NearbyHandle = GetClosestHandle(MousePosition);
 	if (NearbyHandle.IsSet())
 	{
@@ -242,119 +331,4 @@ TOptional<EMouseCursor::Type> SNineSlicerTab::GetCursor() const
 	return SCompoundWidget::GetCursor();
 }
 
-FVector2D SNineSlicerTab::AbsolutePositionToPercentage(const FVector2D& AbsolutePosition) const
-{
-	const FVector2D WidgetSize = ViewCanvas->GetCachedGeometry().GetLocalSize();
-	const FVector2D WidgetSpace = ViewCanvas->GetCachedGeometry().AbsoluteToLocal(AbsolutePosition);
-	double PosX = WidgetSpace.X / WidgetSize.X;
-	double PosY = WidgetSpace.Y / WidgetSize.Y;
-
-	return {PosX, PosY};
-}
-
-FVector2D SNineSlicerTab::PercentageToAbsolutePosition(const FVector2D& Percentage) const
-{
-	const FVector2D WidgetSize = ViewCanvas->GetCachedGeometry().GetAbsoluteSize();
-	double PosX = Percentage.X * WidgetSize.X;
-	double PosY = Percentage.Y * WidgetSize.Y;
-	const FVector2D AbsoluteSpace = ViewCanvas->GetCachedGeometry().LocalToAbsolute({PosX, PosY});
-
-	return AbsoluteSpace;
-}
-
-void SNineSlicerTab::SetHandePosition(EHandlePosition Handle, FVector2D InValue)
-{
-	// TODO: don't let left cross top or top cross bottom
-	UImage* Image = GetCurrentImage();
-	if (!Image)
-	{
-		return;
-	}
-
-	auto Brush = Image->GetBrush();
-
-	const UNineSlicerSettings* Settings = GetDefault<UNineSlicerSettings>();
-	const auto Precision = Settings->DecimalPrecision;
-	if (Precision > 0)
-	{
-		InValue = FVector2D(RoundDecimal(InValue.X, Precision), RoundDecimal(InValue.Y, Precision));
-	}
-
-	if (Handle == EHandlePosition::Top)
-	{
-		Brush.Margin.Top = FMath::Clamp(InValue.Y, 0, 1);
-	}
-	if (Handle == EHandlePosition::Left)
-	{
-		Brush.Margin.Left = FMath::Clamp(InValue.X, 0, 1);
-	}
-	if (Handle == EHandlePosition::Bottom)
-	{
-		Brush.Margin.Bottom = FMath::Clamp(1.0 - InValue.Y, 0, 1);
-	}
-	if (Handle == EHandlePosition::Right)
-	{
-		Brush.Margin.Right = FMath::Clamp(1.0 - InValue.X, 0, 1);
-	}
-
-	Image->SetFlags(RF_Transactional);
-	Image->Modify();
-
-	static const FName BrushPropertyName(TEXT("Brush"));
-	FObjectEditorUtils::SetPropertyValue<UImage, FSlateBrush>(Image, BrushPropertyName, Brush);
-	Image->SetBrush(Brush);
-}
-
-FVector2D SNineSlicerTab::GetHandlePosition(EHandlePosition Handle) const
-{
-	if (Handle == EHandlePosition::Top)
-	{
-		constexpr float X = 0.5;
-		const float Y = CurrentData.Margin.Top;
-		return FVector2D(X, Y);
-	}
-	if (Handle == EHandlePosition::Left)
-	{
-		const float X = CurrentData.Margin.Left;
-		constexpr float Y = 0.5;
-		return FVector2D(X, Y);
-	}
-	if (Handle == EHandlePosition::Bottom)
-	{
-		constexpr float X = 0.5;
-		const float Y = 1.0 - CurrentData.Margin.Bottom;
-		return FVector2D(X, Y);
-	}
-	if (Handle == EHandlePosition::Right)
-	{
-		const float X = 1.0 - CurrentData.Margin.Right;
-		constexpr float Y = 0.5;
-		return FVector2D(X, Y);
-	}
-
-	return FVector2D::ZeroVector;
-}
-
-TOptional<EHandlePosition> SNineSlicerTab::GetClosestHandle(FVector2D MousePosition) const
-{
-	TMap<EHandlePosition, FVector2D> CurrentPositions;
-	CurrentPositions.Emplace(EHandlePosition::Top, GetHandlePosition(EHandlePosition::Top));
-	CurrentPositions.Emplace(EHandlePosition::Left, GetHandlePosition(EHandlePosition::Left));
-	CurrentPositions.Emplace(EHandlePosition::Bottom, GetHandlePosition(EHandlePosition::Bottom));
-	CurrentPositions.Emplace(EHandlePosition::Right, GetHandlePosition(EHandlePosition::Right));
-
-	double MinDistance = MaxGrabDistance;
-	TOptional<EHandlePosition> Result;
-
-	for (const TTuple<EHandlePosition, FVector2D>& Position : CurrentPositions)
-	{
-		const double Distance = FVector2D::DistSquared(Position.Value, MousePosition);
-		if (Distance < MinDistance)
-		{
-			MinDistance = Distance;
-			Result = Position.Key;
-		}
-	}
-
-	return Result;
-}
+#undef LOCTEXT_NAMESPACE

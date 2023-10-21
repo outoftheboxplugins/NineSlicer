@@ -29,19 +29,36 @@ public:
 	SLATE_BEGIN_ARGS(SNineSlicerTab) {}
 	SLATE_END_ARGS()
 
-	void Construct(const FArguments& InArgs, TSharedPtr<FWidgetBlueprintEditor> InBlueprintEditor);
+	/**
+	 * Creates the slate widget that mirroring the currently selected widget with handles on top
+	 */
+	void Construct(const FArguments& InArgs, const TWeakPtr<FWidgetBlueprintEditor>& InBlueprintEditor);
 
 private:
+	/**
+	 * Draws an interactable handle at the position of the Handle in the main canvas
+	 */
+	void AddMarginHandle(EHandlePosition Handle);
+	/**
+	 * Returns the currently selected Image (if any) in the UMG editor
+	 */
 	UImage* GetCurrentImage() const;
-
-	void AddSlot(TDelegate<FVector2D()> GetCoordinates);
-
-	FVector2D AbsolutePositionToPercentage(const FVector2D& AbsolutePosition) const;
-	FVector2D PercentageToAbsolutePosition(const FVector2D& Percentage) const;
+	/**
+	 * Returns the position of an interactable handle as percentage
+	 */
 	FVector2D GetHandlePosition(EHandlePosition Handle) const;
-
+	/**
+	 * Returns the closest to an absolute position if it's within the interaction range
+	 */
+	TOptional<EHandlePosition> GetClosestHandle(FVector2D AbsolutePosition) const;
+	/**
+	 * Updates the matching margin property based on an interactable handle
+	 */
 	void SetHandePosition(EHandlePosition Handle, FVector2D InValue);
-	TOptional<EHandlePosition> GetClosestHandle(FVector2D MousePosition) const;
+	/**
+	 * Transforms an absolute position into a percentage
+	 */
+	FVector2D AbsolutePositionToPercentage(const FVector2D& AbsolutePosition) const;
 
 	// Begin SCompoundWidget interface
 	virtual void Tick(const FGeometry& AllottedGeometry, const double InCurrentTime, const float InDeltaTime) override;
@@ -60,11 +77,24 @@ private:
 	virtual TOptional<EMouseCursor::Type> GetCursor() const override;
 	// End SCompoundWidget interface
 
+	/**
+	 * Owner UMG blueprint editor instance
+	 */
 	TWeakPtr<FWidgetBlueprintEditor> WeakBlueprintEditor;
-	TSharedPtr<SCanvas> ViewCanvas;
-	FSlateBrush CurrentData;
-
+	/**
+	 * Current margin adjustment edit action. Needed for undo/redo
+	 */
+	TSharedPtr<FScopedTransaction> ScopedTransaction;
+	/**
+	 * Handle that's currently grabbed with the mouse
+	 */
 	TOptional<EHandlePosition> HandleEdited;
-	FScopedTransaction* ScopedTransaction = nullptr;
-	float MaxGrabDistance = 0.001f;
+	/**
+	 * Main canvas containing the Image edited and the draggable handles
+	 */
+	TSharedPtr<SCanvas> ViewCanvas;
+	/**
+	 * Mirror brush based on the current selection
+	 */
+	FSlateBrush CurrentData;
 };
