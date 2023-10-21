@@ -1,6 +1,6 @@
 // Copyright Out-of-the-Box Plugins 2018-2023. All Rights Reserved.
 
-#include "SNineSlicerTab.h"
+#include "NineSlicerWidget.h"
 
 #include <Components/Image.h>
 #include <ObjectEditorUtils.h>
@@ -26,26 +26,7 @@ double RoundDecimal(double InNumber, int32 Decimals)
 	return FMath::CeilToDouble(InNumber * Multiplier) / Multiplier;
 }
 
-void FNineSlicerInputProcessor::Tick(const float DeltaTime, FSlateApplication& SlateApp, TSharedRef<ICursor> Cursor)
-{
-}
-
-bool FNineSlicerInputProcessor::HandleMouseButtonDownEvent(FSlateApplication& SlateApp, const FPointerEvent& MouseEvent)
-{
-	return OnMouseButtonDown.Execute(MouseEvent);
-}
-
-bool FNineSlicerInputProcessor::HandleMouseButtonUpEvent(FSlateApplication& SlateApp, const FPointerEvent& MouseEvent)
-{
-	return OnMouseButtonUp.Execute(MouseEvent);
-}
-
-bool FNineSlicerInputProcessor::HandleMouseMoveEvent(FSlateApplication& SlateApp, const FPointerEvent& MouseEvent)
-{
-	return OnMouseMove.Execute(MouseEvent);
-}
-
-void SNineSlicerTab::Construct(const FArguments& InArgs, const TWeakPtr<FWidgetBlueprintEditor>& InBlueprintEditor)
+void SNineSlicerWidget::Construct(const FArguments& InArgs, const TWeakPtr<FWidgetBlueprintEditor>& InBlueprintEditor)
 {
 	WeakBlueprintEditor = InBlueprintEditor;
 
@@ -76,22 +57,22 @@ void SNineSlicerTab::Construct(const FArguments& InArgs, const TWeakPtr<FWidgetB
 	AddMarginHandle(EHandlePosition::Right);
 
 	FSlateApplication& App = FSlateApplication::Get();
-	App.OnPreTick().AddSP(this, &SNineSlicerTab::OnPreTick);
+	App.OnPreTick().AddSP(this, &SNineSlicerWidget::OnPreTick);
 
 	InputProcessor = MakeShared<FNineSlicerInputProcessor>();
-	InputProcessor->OnMouseButtonDown.BindSP(this, &SNineSlicerTab::OnProcessorMouseButtonDown);
-	InputProcessor->OnMouseButtonUp.BindSP(this, &SNineSlicerTab::OnProcessorMouseButtonUp);
-	InputProcessor->OnMouseMove.BindSP(this, &SNineSlicerTab::OnProcessorMouseMove);
+	InputProcessor->OnMouseButtonDown.BindSP(this, &SNineSlicerWidget::OnProcessorMouseButtonDown);
+	InputProcessor->OnMouseButtonUp.BindSP(this, &SNineSlicerWidget::OnProcessorMouseButtonUp);
+	InputProcessor->OnMouseMove.BindSP(this, &SNineSlicerWidget::OnProcessorMouseMove);
 
 	App.RegisterInputPreProcessor(InputProcessor);
 }
 
-SNineSlicerTab::~SNineSlicerTab()
+SNineSlicerWidget::~SNineSlicerWidget()
 {
 	FSlateApplication::Get().UnregisterInputPreProcessor(InputProcessor);
 }
 
-void SNineSlicerTab::AddMarginHandle(EHandlePosition Handle)
+void SNineSlicerWidget::AddMarginHandle(EHandlePosition Handle)
 {
 	// clang-format off
 	SCanvas::FScopedWidgetSlotArguments NewSlot = ViewCanvas->AddSlot();
@@ -117,7 +98,7 @@ void SNineSlicerTab::AddMarginHandle(EHandlePosition Handle)
 	// clang-format on
 }
 
-UImage* SNineSlicerTab::GetCurrentImage() const
+UImage* SNineSlicerWidget::GetCurrentImage() const
 {
 	const TSharedPtr<FWidgetBlueprintEditor> WidgetBlueprintEditor = WeakBlueprintEditor.Pin();
 	if (!WidgetBlueprintEditor)
@@ -137,7 +118,7 @@ UImage* SNineSlicerTab::GetCurrentImage() const
 	return Cast<UImage>(Widget);
 }
 
-FVector2D SNineSlicerTab::GetHandlePosition(EHandlePosition Handle) const
+FVector2D SNineSlicerWidget::GetHandlePosition(EHandlePosition Handle) const
 {
 	if (Handle == EHandlePosition::Top)
 	{
@@ -167,7 +148,7 @@ FVector2D SNineSlicerTab::GetHandlePosition(EHandlePosition Handle) const
 	return FVector2D::ZeroVector;
 }
 
-TOptional<EHandlePosition> SNineSlicerTab::GetClosestHandle(FVector2D AbsolutePosition) const
+TOptional<EHandlePosition> SNineSlicerWidget::GetClosestHandle(FVector2D AbsolutePosition) const
 {
 	constexpr float MaxGrabDistance = 0.001f;
 	const FVector2D PercentagePosition = AbsolutePositionToPercentage(AbsolutePosition);
@@ -194,7 +175,7 @@ TOptional<EHandlePosition> SNineSlicerTab::GetClosestHandle(FVector2D AbsolutePo
 	return Result;
 }
 
-void SNineSlicerTab::SetHandePosition(EHandlePosition Handle, FVector2D InValue)
+void SNineSlicerWidget::SetHandePosition(EHandlePosition Handle, FVector2D InValue)
 {
 	UImage* Image = GetCurrentImage();
 	if (!Image)
@@ -236,7 +217,7 @@ void SNineSlicerTab::SetHandePosition(EHandlePosition Handle, FVector2D InValue)
 	Image->SetBrush(Brush);
 }
 
-FVector2D SNineSlicerTab::AbsolutePositionToPercentage(const FVector2D& AbsolutePosition) const
+FVector2D SNineSlicerWidget::AbsolutePositionToPercentage(const FVector2D& AbsolutePosition) const
 {
 	const FVector2D WidgetSize = ViewCanvas->GetCachedGeometry().GetLocalSize();
 	const FVector2D WidgetSpace = ViewCanvas->GetCachedGeometry().AbsoluteToLocal(AbsolutePosition);
@@ -246,7 +227,7 @@ FVector2D SNineSlicerTab::AbsolutePositionToPercentage(const FVector2D& Absolute
 	return {PosX, PosY};
 }
 
-void SNineSlicerTab::Tick(const FGeometry& AllottedGeometry, const double InCurrentTime, const float InDeltaTime)
+void SNineSlicerWidget::Tick(const FGeometry& AllottedGeometry, const double InCurrentTime, const float InDeltaTime)
 {
 	SCompoundWidget::Tick(AllottedGeometry, InCurrentTime, InDeltaTime);
 
@@ -259,7 +240,7 @@ void SNineSlicerTab::Tick(const FGeometry& AllottedGeometry, const double InCurr
 	}
 }
 
-int32 SNineSlicerTab::OnPaint(
+int32 SNineSlicerWidget::OnPaint(
 	const FPaintArgs& Args,
 	const FGeometry& AllottedGeometry,
 	const FSlateRect& MyCullingRect,
@@ -308,7 +289,7 @@ int32 SNineSlicerTab::OnPaint(
 	return LayerId;
 }
 
-bool SNineSlicerTab::OnProcessorMouseButtonUp(const FPointerEvent& MouseEvent)
+bool SNineSlicerWidget::OnProcessorMouseButtonUp(const FPointerEvent& MouseEvent)
 {
 	if (!HandleEdited.IsSet())
 	{
@@ -325,7 +306,7 @@ bool SNineSlicerTab::OnProcessorMouseButtonUp(const FPointerEvent& MouseEvent)
 	return true;
 }
 
-bool SNineSlicerTab::OnProcessorMouseMove(const FPointerEvent& MouseEvent)
+bool SNineSlicerWidget::OnProcessorMouseMove(const FPointerEvent& MouseEvent)
 {
 	if (!HandleEdited.IsSet())
 	{
@@ -338,7 +319,7 @@ bool SNineSlicerTab::OnProcessorMouseMove(const FPointerEvent& MouseEvent)
 	return true;
 }
 
-bool SNineSlicerTab::OnProcessorMouseButtonDown(const FPointerEvent& MouseEvent)
+bool SNineSlicerWidget::OnProcessorMouseButtonDown(const FPointerEvent& MouseEvent)
 {
 	HandleEdited = GetClosestHandle(MouseEvent.GetScreenSpacePosition());
 
@@ -355,7 +336,7 @@ bool SNineSlicerTab::OnProcessorMouseButtonDown(const FPointerEvent& MouseEvent)
 	return true;
 }
 
-void SNineSlicerTab::OnPreTick(float DeltaTime)
+void SNineSlicerWidget::OnPreTick(float DeltaTime)
 {
 	const TOptional<EMouseCursor::Type> CursorType = ComputeCursor();
 	if (CursorType.IsSet())
@@ -364,7 +345,7 @@ void SNineSlicerTab::OnPreTick(float DeltaTime)
 	}
 }
 
-TOptional<EMouseCursor::Type> SNineSlicerTab::ComputeCursor() const
+TOptional<EMouseCursor::Type> SNineSlicerWidget::ComputeCursor() const
 {
 	if (HandleEdited.IsSet())
 	{

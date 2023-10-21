@@ -6,7 +6,7 @@
 #include <Widgets/Layout/SScaleBox.h>
 
 #include "NineSlicerSettings.h"
-#include "SNineSlicerTab.h"
+#include "NineSlicerWidget.h"
 
 #define LOCTEXT_NAMESPACE "NineSlicer"
 
@@ -97,7 +97,7 @@ TSharedRef<SWidget> FNineSlicerSummoner::CreateTabBody(const FWorkflowTabSpawnIn
 				[
 					SNew(SButton)
 					.OnClicked(this, &FNineSlicerSummoner::ResetMargins)
-					.ToolTip(TEXT("ResetMaringsTip", "Resets the brush's margins to 0,0,0,0"))
+					.ToolTipText(LOCTEXT("ResetMaringsTip", "Resets the brush's margins to 0,0,0,0"))
 					[
 						SNew(SImage)
 						.Image(FAppStyle::GetBrush("Icons.Refresh"))
@@ -109,7 +109,7 @@ TSharedRef<SWidget> FNineSlicerSummoner::CreateTabBody(const FWorkflowTabSpawnIn
 				[
 					SNew(SButton)
 					.OnClicked(this, &FNineSlicerSummoner::OpenSettings)
-					.ToolTip(TEXT("OpenSettingsTip", "Opens the plugin's editor preferences"))
+					.ToolTipText(LOCTEXT("OpenSettingsTip", "Opens the plugin's editor preferences"))
 					[
 						SNew(SImage)
 						.Image(FAppStyle::Get().GetBrush("Icons.Settings"))
@@ -122,7 +122,7 @@ TSharedRef<SWidget> FNineSlicerSummoner::CreateTabBody(const FWorkflowTabSpawnIn
 				SNew(SScaleBox)
 				.Stretch(EStretch::ScaleToFit)
 				[
-					SNew(SNineSlicerTab, WeakWidgetBlueprintEditor)
+					SNew(SNineSlicerWidget, WeakWidgetBlueprintEditor)
 				]
 			]
 		];
