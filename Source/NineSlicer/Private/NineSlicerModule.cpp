@@ -1,23 +1,18 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
+// Copyright Out-of-the-Box Plugins 2018-2023. All Rights Reserved.
 
-#include "NineSlicer.h"
+#include "NineSlicerModule.h"
 
-#include "BlueprintModes/WidgetBlueprintApplicationModes.h"
+#include <BlueprintModes/WidgetBlueprintApplicationMode.h>
+#include <BlueprintModes/WidgetBlueprintApplicationModes.h>
+#include <UMGEditorModule.h>
+
 #include "NineSlicerTabSummoner.h"
-#include "ToolMenu.h"
-#include "ToolMenuSection.h"
-#include "ToolMenus.h"
-#include "UMGEditorModule.h"
-#include "WorkflowOrientedApp/ApplicationMode.h"
-
-#define LOCTEXT_NAMESPACE "FNineSlicerModule"
-
 
 void FNineSlicerModule::HandleRegisterBlueprintEditorTab(const FWidgetBlueprintApplicationMode& ApplicationMode, FWorkflowAllowedTabSet& TabFactories)
 {
 	if (ApplicationMode.GetModeName() == FWidgetBlueprintApplicationModes::DesignerMode)
 	{
-		TabFactories.RegisterFactory(MakeShared<FMVVMBindingSummoner>(ApplicationMode.GetBlueprintEditor()));
+		TabFactories.RegisterFactory(MakeShared<FNineSlicerSummoner>(ApplicationMode.GetBlueprintEditor()));
 	}
 }
 
@@ -29,8 +24,10 @@ void FNineSlicerModule::StartupModule()
 
 void FNineSlicerModule::ShutdownModule()
 {
+	if (IUMGEditorModule* UMGEditorModule = FModuleManager::GetModulePtr<IUMGEditorModule>("UMGEditor"))
+	{
+		UMGEditorModule->OnRegisterLayoutExtensions().RemoveAll(this);
+	}
 }
-
-#undef LOCTEXT_NAMESPACE
 
 IMPLEMENT_MODULE(FNineSlicerModule, NineSlicer)

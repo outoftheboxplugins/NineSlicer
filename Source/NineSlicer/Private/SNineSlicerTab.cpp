@@ -1,75 +1,30 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
+// Copyright Out-of-the-Box Plugins 2018-2023. All Rights Reserved.
 
 #include "SNineSlicerTab.h"
 
-#include "Components/Image.h"
-#include "NineSlicerSettings.h"
-#include "ObjectEditorUtils.h"
-#include "SlateOptMacros.h"
-#include "WidgetBlueprintEditor.h"
-#include "WidgetReference.h"
-#include "Widgets/Layout/SScaleBox.h"
-#include "Widgets/SCanvas.h"
+#include <Components/Image.h>
+#include <ObjectEditorUtils.h>
+#include <SlateOptMacros.h>
+#include <WidgetBlueprintEditor.h>
+#include <WidgetReference.h>
+#include <Widgets/SCanvas.h>
 
+#include "NineSlicerSettings.h"
+
+// TODO: We should have a preview mode where we display how each segment gets scaled (e.g.: middle = all directions, upper left = none, middle left = only vertically)
+
+/**
+ * Helper function to truncate a double's decimals
+ */
 double RoundDecimal(double InNumber, int32 Decimals)
 {
 	const double Multiplier = FMath::Pow(10.0, Decimals);
 	return FMath::CeilToDouble(InNumber * Multiplier) / Multiplier;
 }
 
-void SNineSlicerTab::AddSlot(TDelegate<FVector2D()> GetCoordinates)
-{
-	
-	// clang-format off
-	SCanvas::FScopedWidgetSlotArguments NewSlot = ViewCanvas->AddSlot();
-	NewSlot
-		.Size(FVector2D(1, 1))
-		.Position_Lambda( [=, this]()
-			{
-				const FVector2D Offset = {0.5, 0.5};
-				
-				const FVector2D Coords = GetCoordinates.Execute();
-				const FVector2D CanvasSize = ViewCanvas->GetCachedGeometry().GetLocalSize();
-				return FVector2D(CanvasSize.X * Coords.X, CanvasSize.Y * Coords.Y) -  Offset;
-			})
-		[
-			SNew(SImage)
-			.Image(FAppStyle::Get().GetBrush("UMGEditor.TransformHandle"))
-			.ColorAndOpacity_Lambda([]()
-			{
-				const UNineSlicerSettings* Settings = GetDefault<UNineSlicerSettings>();
-				return Settings->DrawColor;
-			})
-		];
-	// clang-format on
-}
-
-
-UImage* SNineSlicerTab::GetCurrentImage() const
-{
-	const TSharedPtr<FWidgetBlueprintEditor> WidgetBlueprintEditor = WeakBlueprintEditor.Pin();
-	if (!WidgetBlueprintEditor)
-	{
-		return nullptr;
-	}
-
-	const TSet<FWidgetReference>& SelectedWidgets = WidgetBlueprintEditor->GetSelectedWidgets();
-	if (SelectedWidgets.Num() != 1)
-	{
-		return nullptr;
-	}
-
-	FWidgetReference SelectedWidget = SelectedWidgets.Array()[0];
-
-	UWidget* Widget = SelectedWidget.GetTemplate();
-	return Cast<UImage>(Widget);
-}
-
 void SNineSlicerTab::Construct(const FArguments& InArgs, TSharedPtr<FWidgetBlueprintEditor> InBlueprintEditor)
 {
 	WeakBlueprintEditor = InBlueprintEditor;
-	TSharedPtr<FAssetEditorToolkit> AssetEditor = HostingApp.Pin();
 
 	// clang-format off
 	ChildSlot
@@ -118,6 +73,53 @@ void SNineSlicerTab::Construct(const FArguments& InArgs, TSharedPtr<FWidgetBluep
 	));
 }
 
+void SNineSlicerTab::AddSlot(TDelegate<FVector2D()> GetCoordinates)
+{
+	// clang-format off
+	SCanvas::FScopedWidgetSlotArguments NewSlot = ViewCanvas->AddSlot();
+	NewSlot
+		.Size(FVector2D(1, 1))
+		.Position_Lambda( [=, this]()
+			{
+				const FVector2D Offset = {0.5, 0.5};
+				
+				const FVector2D Coords = GetCoordinates.Execute();
+				const FVector2D CanvasSize = ViewCanvas->GetCachedGeometry().GetLocalSize();
+				return FVector2D(CanvasSize.X * Coords.X, CanvasSize.Y * Coords.Y) -  Offset;
+			})
+		[
+			SNew(SImage)
+			.Image(FAppStyle::Get().GetBrush("UMGEditor.TransformHandle"))
+			.ColorAndOpacity_Lambda([]()
+			{
+				const UNineSlicerSettings* Settings = GetDefault<UNineSlicerSettings>();
+				return Settings->DrawColor;
+			})
+		];
+	// clang-format on
+}
+
+
+UImage* SNineSlicerTab::GetCurrentImage() const
+{
+	const TSharedPtr<FWidgetBlueprintEditor> WidgetBlueprintEditor = WeakBlueprintEditor.Pin();
+	if (!WidgetBlueprintEditor)
+	{
+		return nullptr;
+	}
+
+	const TSet<FWidgetReference>& SelectedWidgets = WidgetBlueprintEditor->GetSelectedWidgets();
+	if (SelectedWidgets.Num() != 1)
+	{
+		return nullptr;
+	}
+
+	const FWidgetReference SelectedWidget = SelectedWidgets.Array()[0];
+
+	UWidget* Widget = SelectedWidget.GetTemplate();
+	return Cast<UImage>(Widget);
+}
+
 void SNineSlicerTab::Tick(const FGeometry& AllottedGeometry, const double InCurrentTime, const float InDeltaTime)
 {
 	SCompoundWidget::Tick(AllottedGeometry, InCurrentTime, InDeltaTime);
@@ -127,7 +129,7 @@ void SNineSlicerTab::Tick(const FGeometry& AllottedGeometry, const double InCurr
 		CurrentData = Image->GetBrush();
 		CurrentData.DrawAs = ESlateBrushDrawType::Image;
 
-		// Only switch when the focus switches and if the margin is 0,0,0,0 default it to 0.1, 0.1, 0.9, 0.9
+		// Only switch when the focus switches
 	}
 }
 
@@ -232,7 +234,7 @@ TOptional<EMouseCursor::Type> SNineSlicerTab::GetCursor() const
 
 	const FVector2D MousePosition = AbsolutePositionToPercentage(FSlateApplication::Get().GetCursorPos());
 	const TOptional<EHandlePosition> NearbyHandle = GetClosestHandle(MousePosition);
-	if(NearbyHandle.IsSet())
+	if (NearbyHandle.IsSet())
 	{
 		return EMouseCursor::GrabHand;
 	}
@@ -273,7 +275,7 @@ void SNineSlicerTab::SetHandePosition(EHandlePosition Handle, FVector2D InValue)
 
 	const UNineSlicerSettings* Settings = GetDefault<UNineSlicerSettings>();
 	const auto Precision = Settings->DecimalPrecision;
-	if(Precision > 0)
+	if (Precision > 0)
 	{
 		InValue = FVector2D(RoundDecimal(InValue.X, Precision), RoundDecimal(InValue.Y, Precision));
 	}
@@ -307,26 +309,26 @@ FVector2D SNineSlicerTab::GetHandlePosition(EHandlePosition Handle) const
 {
 	if (Handle == EHandlePosition::Top)
 	{
-		const float X = 0.5;
+		constexpr float X = 0.5;
 		const float Y = CurrentData.Margin.Top;
 		return FVector2D(X, Y);
 	}
 	if (Handle == EHandlePosition::Left)
 	{
 		const float X = CurrentData.Margin.Left;
-		const float Y = 0.5;
+		constexpr float Y = 0.5;
 		return FVector2D(X, Y);
 	}
 	if (Handle == EHandlePosition::Bottom)
 	{
-		const float X = 0.5;
+		constexpr float X = 0.5;
 		const float Y = 1.0 - CurrentData.Margin.Bottom;
 		return FVector2D(X, Y);
 	}
 	if (Handle == EHandlePosition::Right)
 	{
 		const float X = 1.0 - CurrentData.Margin.Right;
-		const float Y = 0.5;
+		constexpr float Y = 0.5;
 		return FVector2D(X, Y);
 	}
 

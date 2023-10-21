@@ -1,7 +1,8 @@
+// Copyright Out-of-the-Box Plugins 2018-2023. All Rights Reserved.
 
 #include "NineSlicerSettings.h"
 
-#include "ISettingsModule.h"
+#include <ISettingsModule.h>
 
 void UNineSlicerSettings::OpenSettings()
 {

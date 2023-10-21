@@ -1,32 +1,30 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
+// Copyright Out-of-the-Box Plugins 2018-2023. All Rights Reserved.
 
 #include "NineSlicerTabSummoner.h"
 
+#include <WidgetBlueprintEditor.h>
+#include <Widgets/Layout/SScaleBox.h>
+
 #include "NineSlicerSettings.h"
 #include "SNineSlicerTab.h"
-#include "StatusBarSubsystem.h"
-#include "WidgetBlueprintEditor.h"
-#include "Widgets/Layout/SScaleBox.h"
-#include "Widgets/Input/SSpinBox.h"
 
-#define LOCTEXT_NAMESPACE "TabSummoner"
+#define LOCTEXT_NAMESPACE "NineSlicer"
 
-const FName FMVVMBindingSummoner::TabID(TEXT("MVVMTab"));
-
-FMVVMBindingSummoner::FMVVMBindingSummoner(TSharedPtr<FWidgetBlueprintEditor> BlueprintEditor, bool bInIsDrawerTab) :
-	FWorkflowTabFactory(TabID, BlueprintEditor), WeakWidgetBlueprintEditor(BlueprintEditor), bIsDrawerTab(bInIsDrawerTab)
+FNineSlicerSummoner::FNineSlicerSummoner(const TSharedPtr<FWidgetBlueprintEditor>& BlueprintEditor) :
+	FWorkflowTabFactory(TEXT("NineSlicer"), BlueprintEditor), WeakWidgetBlueprintEditor(BlueprintEditor)
 {
-	TabLabel = LOCTEXT("ViewBinding_ViewMenu_Label", "Nine Slicer");
+	TabLabel = LOCTEXT("NineSlicer", "Nine Slicer");
 	TabIcon = FSlateIcon(FSlateIcon("FractureEditorStyle", "FractureEditor.Slice"));
-
 	bIsSingleton = true;
 
-	ViewMenuDescription = LOCTEXT("ViewBinding_ViewMenu_Desc", "Nine Slicer");
-	ViewMenuTooltip = LOCTEXT("ViewBinding_ViewMenu_ToolTip", "Show the View Bindings tab");
+	// TODO: Check where this appear and set them to some sensible values
+	ViewMenuDescription = LOCTEXT("NineSlicerDescription", "Nine Slicer Description");
+	ViewMenuTooltip = LOCTEXT("NineSlicerTip", "Nine Slicer Tooltip");
 }
 
-FReply FMVVMBindingSummoner::SetUserColor(FLinearColor Color) const
+FReply FNineSlicerSummoner::SetUserColor(FLinearColor Color) const
 {
+	// TODO: Check if this save works properly and where the file is actually saved on disk (this is a EditorPerProjectUserSettings, defaultconfig)
 	UNineSlicerSettings* Settings = GetMutableDefault<UNineSlicerSettings>();
 	Settings->DrawColor = Color;
 	Settings->SaveConfig();
@@ -34,27 +32,14 @@ FReply FMVVMBindingSummoner::SetUserColor(FLinearColor Color) const
 	return FReply::Handled();
 }
 
-int32 FMVVMBindingSummoner::GetPrecision() const
-{
-	const UNineSlicerSettings* Settings = GetDefault<UNineSlicerSettings>();
-	return Settings->DecimalPrecision;
-}
-
-void FMVVMBindingSummoner::OnPrecisionChanged(int32 InValue) const
-{
-	UNineSlicerSettings* Settings = GetMutableDefault<UNineSlicerSettings>();
-	Settings->DecimalPrecision = InValue;
-	Settings->SaveConfig();
-}
-
-FReply FMVVMBindingSummoner::OpenSettings() const
+FReply FNineSlicerSummoner::OpenSettings() const
 {
 	UNineSlicerSettings::OpenSettings();
 
 	return FReply::Handled();
 }
 
-TSharedRef<SWidget> FMVVMBindingSummoner::CreateTabBody(const FWorkflowTabSpawnInfo& Info) const
+TSharedRef<SWidget> FNineSlicerSummoner::CreateTabBody(const FWorkflowTabSpawnInfo& Info) const
 {
 	// clang-format off
 	return SNew(SBox)
@@ -71,7 +56,7 @@ TSharedRef<SWidget> FMVVMBindingSummoner::CreateTabBody(const FWorkflowTabSpawnI
 				.AutoWidth()
 				[
 					SNew(SButton)
-					.OnClicked(this, &FMVVMBindingSummoner::SetUserColor, FLinearColor::Red)
+					.OnClicked(this, &FNineSlicerSummoner::SetUserColor, FLinearColor::Red)
 					[
 						SNew(SImage)
 						.ColorAndOpacity(FLinearColor::Red)
@@ -81,7 +66,7 @@ TSharedRef<SWidget> FMVVMBindingSummoner::CreateTabBody(const FWorkflowTabSpawnI
 				.AutoWidth()
 				[
 					SNew(SButton)
-					.OnClicked(this, &FMVVMBindingSummoner::SetUserColor, FLinearColor::Green)
+					.OnClicked(this, &FNineSlicerSummoner::SetUserColor, FLinearColor::Green)
 					[
 						SNew(SImage)
 						.ColorAndOpacity(FLinearColor::Green)
@@ -91,7 +76,7 @@ TSharedRef<SWidget> FMVVMBindingSummoner::CreateTabBody(const FWorkflowTabSpawnI
 				.AutoWidth()
 				[
 					SNew(SButton)
-					.OnClicked(this, &FMVVMBindingSummoner::SetUserColor, FLinearColor::Blue)
+					.OnClicked(this, &FNineSlicerSummoner::SetUserColor, FLinearColor::Blue)
 					[
 						SNew(SImage)
 						.ColorAndOpacity(FLinearColor::Blue)
@@ -107,7 +92,7 @@ TSharedRef<SWidget> FMVVMBindingSummoner::CreateTabBody(const FWorkflowTabSpawnI
 				.AutoWidth()
 				[
 					SNew(SButton)
-					.OnClicked(this, &FMVVMBindingSummoner::OpenSettings)
+					.OnClicked(this, &FNineSlicerSummoner::OpenSettings)
 					[
 						SNew(SImage)
 						.Image(FAppStyle::Get().GetBrush("Icons.Settings"))
