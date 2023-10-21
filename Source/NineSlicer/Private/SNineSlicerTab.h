@@ -2,6 +2,7 @@
 
 #pragma once
 
+#include <Framework/Application/IInputProcessor.h>
 #include <Widgets/SCompoundWidget.h>
 
 class FWidgetBlueprintEditor;
@@ -20,6 +21,39 @@ enum class EHandlePosition
 };
 
 /**
+ * Nine Slicer Input process that allows us to process event outside the widget space
+ */
+class FNineSlicerInputProcessor : public IInputProcessor
+{
+public:
+	/**
+	 * Common delegate type for subscribing to mouse events
+	 */
+	using FMouseEvent = TDelegate<bool(const FPointerEvent& MouseEvent)>;
+	/**
+	 * Delegated broadcast when the mouse button is down
+	 */
+	FMouseEvent OnMouseButtonDown;
+	/**
+	 * Delegated broadcast when the mouse button is up
+	 */
+	FMouseEvent OnMouseButtonUp;
+	/**
+	 * Delegated broadcast when the mouse moves
+	 */
+	FMouseEvent OnMouseMove;
+
+private:
+	// Begin IInputProcessor interface
+	virtual void Tick(const float DeltaTime, FSlateApplication& SlateApp, TSharedRef<ICursor> Cursor) override;
+	virtual bool HandleMouseButtonDownEvent(FSlateApplication& SlateApp, const FPointerEvent& MouseEvent) override;
+	virtual bool HandleMouseButtonUpEvent(FSlateApplication& SlateApp, const FPointerEvent& MouseEvent) override;
+	virtual bool HandleMouseMoveEvent(FSlateApplication& SlateApp, const FPointerEvent& MouseEvent) override;
+	virtual const TCHAR* GetDebugName() const override { return TEXT("FNineSlicerInputProcessor"); }
+	// Begin IInputProcessor interface
+};
+
+/**
  * Widget displaying an image with visual guides to aid the 9 slice process
  * Guides are interactable and moving them adjusts the margins
  */
@@ -33,6 +67,10 @@ public:
 	 * Creates the slate widget that mirroring the currently selected widget with handles on top
 	 */
 	void Construct(const FArguments& InArgs, const TWeakPtr<FWidgetBlueprintEditor>& InBlueprintEditor);
+	/**
+	 * Destructor called when the widget is deleted
+	 */
+	virtual ~SNineSlicerTab() override;
 
 private:
 	/**
@@ -71,12 +109,28 @@ private:
 		const FWidgetStyle& InWidgetStyle,
 		bool bParentEnabled
 	) const override;
-	virtual FReply OnMouseButtonDown(const FGeometry& MyGeometry, const FPointerEvent& MouseEvent) override;
-	virtual FReply OnMouseButtonUp(const FGeometry& MyGeometry, const FPointerEvent& MouseEvent) override;
-	virtual FReply OnMouseMove(const FGeometry& MyGeometry, const FPointerEvent& MouseEvent) override;
-	virtual TOptional<EMouseCursor::Type> GetCursor() const override;
 	// End SCompoundWidget interface
 
+	/**
+	 * Callback executed when the mouse button is down
+	 */
+	bool OnProcessorMouseButtonDown(const FPointerEvent& MouseEvent);
+	/**
+	 * Callback executed when the mouse button is up
+	 */
+	bool OnProcessorMouseButtonUp(const FPointerEvent& MouseEvent);
+	/**
+	 * Callback executed when the mouse moves
+	 */
+	bool OnProcessorMouseMove(const FPointerEvent& MouseEvent);
+	/**
+	 * Callback executed before the Slate app ticks
+	 */
+	void OnPreTick(float DeltaTime);
+	/**
+	 * Determines what type of cursor we should show depending on the widget state
+	 */
+	TOptional<EMouseCursor::Type> ComputeCursor() const;
 	/**
 	 * Owner UMG blueprint editor instance
 	 */
@@ -97,4 +151,8 @@ private:
 	 * Mirror brush based on the current selection
 	 */
 	FSlateBrush CurrentData;
+	/**
+	 * Input Preprocessor so we can handle events outside the widget
+	 */
+	TSharedPtr<FNineSlicerInputProcessor> InputProcessor;
 };

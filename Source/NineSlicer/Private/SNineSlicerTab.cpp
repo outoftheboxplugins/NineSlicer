@@ -26,6 +26,25 @@ double RoundDecimal(double InNumber, int32 Decimals)
 	return FMath::CeilToDouble(InNumber * Multiplier) / Multiplier;
 }
 
+void FNineSlicerInputProcessor::Tick(const float DeltaTime, FSlateApplication& SlateApp, TSharedRef<ICursor> Cursor)
+{
+}
+
+bool FNineSlicerInputProcessor::HandleMouseButtonDownEvent(FSlateApplication& SlateApp, const FPointerEvent& MouseEvent)
+{
+	return OnMouseButtonDown.Execute(MouseEvent);
+}
+
+bool FNineSlicerInputProcessor::HandleMouseButtonUpEvent(FSlateApplication& SlateApp, const FPointerEvent& MouseEvent)
+{
+	return OnMouseButtonUp.Execute(MouseEvent);
+}
+
+bool FNineSlicerInputProcessor::HandleMouseMoveEvent(FSlateApplication& SlateApp, const FPointerEvent& MouseEvent)
+{
+	return OnMouseMove.Execute(MouseEvent);
+}
+
 void SNineSlicerTab::Construct(const FArguments& InArgs, const TWeakPtr<FWidgetBlueprintEditor>& InBlueprintEditor)
 {
 	WeakBlueprintEditor = InBlueprintEditor;
@@ -55,6 +74,21 @@ void SNineSlicerTab::Construct(const FArguments& InArgs, const TWeakPtr<FWidgetB
 	AddMarginHandle(EHandlePosition::Left);
 	AddMarginHandle(EHandlePosition::Bottom);
 	AddMarginHandle(EHandlePosition::Right);
+
+	FSlateApplication& App = FSlateApplication::Get();
+	App.OnPreTick().AddSP(this, &SNineSlicerTab::OnPreTick);
+
+	InputProcessor = MakeShared<FNineSlicerInputProcessor>();
+	InputProcessor->OnMouseButtonDown.BindSP(this, &SNineSlicerTab::OnProcessorMouseButtonDown);
+	InputProcessor->OnMouseButtonUp.BindSP(this, &SNineSlicerTab::OnProcessorMouseButtonUp);
+	InputProcessor->OnMouseMove.BindSP(this, &SNineSlicerTab::OnProcessorMouseMove);
+
+	App.RegisterInputPreProcessor(InputProcessor);
+}
+
+SNineSlicerTab::~SNineSlicerTab()
+{
+	FSlateApplication::Get().UnregisterInputPreProcessor(InputProcessor);
 }
 
 void SNineSlicerTab::AddMarginHandle(EHandlePosition Handle)
@@ -275,45 +309,65 @@ int32 SNineSlicerTab::OnPaint(
 	return LayerId;
 }
 
-FReply SNineSlicerTab::OnMouseButtonDown(const FGeometry& MyGeometry, const FPointerEvent& MouseEvent)
+// TODO: Also stop dragging when the mouse leaves the box?
+
+bool SNineSlicerTab::OnProcessorMouseButtonUp(const FPointerEvent& MouseEvent)
+{
+	if (!HandleEdited.IsSet())
+	{
+		return false;
+	}
+
+	HandleEdited.Reset();
+	if (ensure(ScopedTransaction.IsValid()))
+	{
+		ScopedTransaction.Reset();
+	}
+
+	WeakBlueprintEditor.Pin()->RefreshPreview();
+	return true;
+}
+
+bool SNineSlicerTab::OnProcessorMouseMove(const FPointerEvent& MouseEvent)
+{
+	if (!HandleEdited.IsSet())
+	{
+		return false;
+	}
+
+	const FVector2D MousePosition = AbsolutePositionToPercentage(FSlateApplication::Get().GetCursorPos());
+	SetHandePosition(HandleEdited.GetValue(), MousePosition);
+
+	return true;
+}
+
+bool SNineSlicerTab::OnProcessorMouseButtonDown(const FPointerEvent& MouseEvent)
 {
 	HandleEdited = GetClosestHandle(MouseEvent.GetScreenSpacePosition());
+
+	if (!HandleEdited.IsSet())
+	{
+		return false;
+	}
 
 	if (ensure(!ScopedTransaction.IsValid()))
 	{
 		ScopedTransaction = MakeShared<FScopedTransaction>(INVTEXT("Nine Slicer Adjustement"));
 	}
 
-	return FReply::Handled();
+	return true;
 }
 
-// TODO: Also stop dragging when the mouse leaves the box?
-FReply SNineSlicerTab::OnMouseButtonUp(const FGeometry& MyGeometry, const FPointerEvent& MouseEvent)
+void SNineSlicerTab::OnPreTick(float DeltaTime)
 {
-	HandleEdited.Reset();
-
-	if (ScopedTransaction.IsValid())
+	const TOptional<EMouseCursor::Type> CursorType = ComputeCursor();
+	if (CursorType.IsSet())
 	{
-		ScopedTransaction.Reset();
+		FSlateApplication::Get().GetPlatformCursor()->SetType(CursorType.GetValue());
 	}
-
-	WeakBlueprintEditor.Pin()->RefreshPreview();
-
-	return FReply::Handled();
 }
 
-FReply SNineSlicerTab::OnMouseMove(const FGeometry& MyGeometry, const FPointerEvent& MouseEvent)
-{
-	if (HandleEdited.IsSet())
-	{
-		const FVector2D MousePosition = AbsolutePositionToPercentage(MouseEvent.GetScreenSpacePosition());
-		SetHandePosition(HandleEdited.GetValue(), MousePosition);
-	}
-
-	return FReply::Unhandled();
-}
-
-TOptional<EMouseCursor::Type> SNineSlicerTab::GetCursor() const
+TOptional<EMouseCursor::Type> SNineSlicerTab::ComputeCursor() const
 {
 	if (HandleEdited.IsSet())
 	{
@@ -327,7 +381,7 @@ TOptional<EMouseCursor::Type> SNineSlicerTab::GetCursor() const
 		return EMouseCursor::GrabHand;
 	}
 
-	return SCompoundWidget::GetCursor();
+	return {};
 }
 
 #undef LOCTEXT_NAMESPACE
