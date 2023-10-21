@@ -12,8 +12,8 @@
 #include "NineSlicerSettings.h"
 
 // TODO: We should have a preview mode where we display how each segment gets scaled (e.g.: middle = all directions, upper left = none, middle left = only vertically)
-// TODO: Better handling for dragging over edges
 // TODO: Show a "please select a ninesliceable image - box or order" message when not good widget is selected
+// TODO: don't let left cross right or top cross bottom
 
 #define LOCTEXT_NAMESPACE "NineSlicer"
 
@@ -196,7 +196,6 @@ TOptional<EHandlePosition> SNineSlicerTab::GetClosestHandle(FVector2D AbsolutePo
 
 void SNineSlicerTab::SetHandePosition(EHandlePosition Handle, FVector2D InValue)
 {
-	// TODO: don't let left cross top or top cross bottom
 	UImage* Image = GetCurrentImage();
 	if (!Image)
 	{
@@ -308,8 +307,6 @@ int32 SNineSlicerTab::OnPaint(
 
 	return LayerId;
 }
-
-// TODO: Also stop dragging when the mouse leaves the box?
 
 bool SNineSlicerTab::OnProcessorMouseButtonUp(const FPointerEvent& MouseEvent)
 {

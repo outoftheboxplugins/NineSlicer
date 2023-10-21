@@ -22,6 +22,10 @@ private:
 	 * Callback executed when opening the plugin's settings
 	 */
 	FReply OpenSettings() const;
+	/**
+	 * Callback executed when reset the Brush marings
+	 */
+	FReply ResetMargins() const;
 	// Begin FWorkflowTabFactory interface
 	virtual TSharedRef<SWidget> CreateTabBody(const FWorkflowTabSpawnInfo& Info) const override;
 	// End FWorkflowTabFactory interface

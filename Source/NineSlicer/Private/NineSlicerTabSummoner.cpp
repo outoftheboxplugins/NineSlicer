@@ -36,6 +36,13 @@ FReply FNineSlicerSummoner::OpenSettings() const
 	return FReply::Handled();
 }
 
+FReply FNineSlicerSummoner::ResetMargins() const
+{
+	// TODO: Implement this, maybe extra to a wrapper widget?
+
+	return FReply::Handled();
+}
+
 TSharedRef<SWidget> FNineSlicerSummoner::CreateTabBody(const FWorkflowTabSpawnInfo& Info) const
 {
 	// clang-format off
@@ -89,7 +96,20 @@ TSharedRef<SWidget> FNineSlicerSummoner::CreateTabBody(const FWorkflowTabSpawnIn
 				.AutoWidth()
 				[
 					SNew(SButton)
+					.OnClicked(this, &FNineSlicerSummoner::ResetMargins)
+					.ToolTip(TEXT("ResetMaringsTip", "Resets the brush's margins to 0,0,0,0"))
+					[
+						SNew(SImage)
+						.Image(FAppStyle::GetBrush("Icons.Refresh"))
+					]
+				]
+
+				+ SHorizontalBox::Slot()
+				.AutoWidth()
+				[
+					SNew(SButton)
 					.OnClicked(this, &FNineSlicerSummoner::OpenSettings)
+					.ToolTip(TEXT("OpenSettingsTip", "Opens the plugin's editor preferences"))
 					[
 						SNew(SImage)
 						.Image(FAppStyle::Get().GetBrush("Icons.Settings"))
