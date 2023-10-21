@@ -65,7 +65,7 @@ void SNineSlicerTab::AddMarginHandle(EHandlePosition Handle)
 		.Size(FVector2D(1, 1))
 		.Position_Lambda( [=, this]()
 			{
-				constexpr FVector2D Offset = {0.5, 0.5};
+				const FVector2D Offset = FVector2D (0.5, 0.5);
 
 				const FVector2D Coords = GetHandlePosition(Handle);
 				const FVector2D CanvasSize = ViewCanvas->GetCachedGeometry().GetLocalSize();
@@ -281,7 +281,7 @@ FReply SNineSlicerTab::OnMouseButtonDown(const FGeometry& MyGeometry, const FPoi
 
 	if (ensure(!ScopedTransaction.IsValid()))
 	{
-		ScopedTransaction = MakeShared<FScopedTransaction>(INVTEXT("TODO"));
+		ScopedTransaction = MakeShared<FScopedTransaction>(INVTEXT("Nine Slicer Adjustement"));
 	}
 
 	return FReply::Handled();
@@ -292,10 +292,9 @@ FReply SNineSlicerTab::OnMouseButtonUp(const FGeometry& MyGeometry, const FPoint
 {
 	HandleEdited.Reset();
 
-	if (ScopedTransaction != nullptr)
+	if (ScopedTransaction.IsValid())
 	{
-		delete ScopedTransaction;
-		ScopedTransaction = nullptr;
+		ScopedTransaction.Reset();
 	}
 
 	WeakBlueprintEditor.Pin()->RefreshPreview();
