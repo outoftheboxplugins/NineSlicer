@@ -9,7 +9,7 @@
 /**
  * Holds the configurable properties for the Nine Slicer Window
  */
-UCLASS(config = EditorPerProjectUserSettings, defaultconfig)
+UCLASS(config = EditorPerProjectUserSettings)
 class UNineSlicerSettings : public UDeveloperSettings
 {
 	GENERATED_BODY()

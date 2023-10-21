@@ -16,15 +16,12 @@ FNineSlicerSummoner::FNineSlicerSummoner(const TSharedPtr<FWidgetBlueprintEditor
 	TabLabel = LOCTEXT("NineSlicer", "Nine Slicer");
 	TabIcon = FSlateIcon(FSlateIcon("FractureEditorStyle", "FractureEditor.Slice"));
 	bIsSingleton = true;
-
-	// TODO: Check where this appear and set them to some sensible values
-	ViewMenuDescription = LOCTEXT("NineSlicerDescription", "Nine Slicer Description");
-	ViewMenuTooltip = LOCTEXT("NineSlicerTip", "Nine Slicer Tooltip");
+	ViewMenuDescription = LOCTEXT("NineSlicerDescription", "Nine Slicer");
+	ViewMenuTooltip = LOCTEXT("NineSlicerTip", "Visual aid for viewing and adjusting the 9 slice scaling");
 }
 
 FReply FNineSlicerSummoner::SetUserColor(FLinearColor Color) const
 {
-	// TODO: Check if this save works properly and where the file is actually saved on disk (this is a EditorPerProjectUserSettings, defaultconfig)
 	UNineSlicerSettings* Settings = GetMutableDefault<UNineSlicerSettings>();
 	Settings->DrawColor = Color;
 	Settings->SaveConfig();
