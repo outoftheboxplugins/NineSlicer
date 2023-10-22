@@ -2,8 +2,6 @@
 
 #pragma once
 
-#include <WorkflowOrientedApp/WorkflowCentricApplication.h>
-
 class FWorkflowAllowedTabSet;
 class FWidgetBlueprintApplicationMode;
 

@@ -3,11 +3,8 @@
 #include "NineSlicerTabSummoner.h"
 
 #include <WidgetBlueprintEditor.h>
-#include <Widgets/Layout/SScaleBox.h>
 
-#include "NineSlicerSettings.h"
 #include "SNineSlicerTab.h"
-#include "SNineSlicerWidget.h"
 
 #define LOCTEXT_NAMESPACE "NineSlicer"
 

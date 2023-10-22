@@ -3,7 +3,6 @@
 #include "SNineSlicerWidget.h"
 
 #include <Components/Image.h>
-#include <SlateOptMacros.h>
 #include <WidgetBlueprintEditor.h>
 #include <WidgetReference.h>
 #include <Widgets/SCanvas.h>
