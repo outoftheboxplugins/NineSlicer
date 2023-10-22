@@ -4,9 +4,9 @@
 
 #include <Widgets/SCompoundWidget.h>
 
-
 class SNineSlicerWidget;
 class FWidgetBlueprintEditor;
+
 class SNineSlicerTab : public SCompoundWidget
 {
 public:

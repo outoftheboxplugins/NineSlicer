@@ -11,10 +11,6 @@
 #include "NineSlicerInputProcessor.h"
 #include "NineSlicerSettings.h"
 
-// TODO: We should have a preview mode where we display how each segment gets scaled (e.g.: middle = all directions, upper left = none, middle left = only vertically)
-// TODO: Show a "please select a ninesliceable image - box or order" message when not good widget is selected
-// TODO: don't let left cross right or top cross bottom
-
 #define LOCTEXT_NAMESPACE "NineSlicer"
 
 /**
@@ -240,13 +236,7 @@ void SNineSlicerWidget::Tick(const FGeometry& AllottedGeometry, const double InC
 {
 	SCompoundWidget::Tick(AllottedGeometry, InCurrentTime, InDeltaTime);
 
-	if (const UImage* Image = GetCurrentImage())
-	{
-		CurrentData = Image->GetBrush();
-		CurrentData.DrawAs = ESlateBrushDrawType::Image;
-
-		// Only switch when the focus switches
-	}
+	UpdateBrushAndState();
 }
 
 int32 SNineSlicerWidget::OnPaint(
@@ -259,6 +249,11 @@ int32 SNineSlicerWidget::OnPaint(
 	bool bParentEnabled
 ) const
 {
+	if (ErrorState.IsSet())
+	{
+		return LayerId;
+	}
+
 	SCompoundWidget::OnPaint(Args, AllottedGeometry, MyCullingRect, OutDrawElements, LayerId, InWidgetStyle, bParentEnabled);
 
 	const UNineSlicerSettings* Settings = GetDefault<UNineSlicerSettings>();
@@ -369,6 +364,34 @@ TOptional<EMouseCursor::Type> SNineSlicerWidget::ComputeCursor() const
 	}
 
 	return {};
+}
+
+void SNineSlicerWidget::UpdateBrushAndState()
+{
+	const UImage* CurrentImage = GetCurrentImage();
+
+	if (!CurrentImage)
+	{
+		ErrorState = INVTEXT("Current selection is not an image.");
+		return;
+	}
+
+	const FSlateBrush Brush = CurrentImage->GetBrush();
+	if (Brush.DrawAs != ESlateBrushDrawType::Box && Brush.DrawAs != ESlateBrushDrawType::Border)
+	{
+		ErrorState = INVTEXT("Current image is not sliceable. Change the brush's DrawAs to Box or Border");
+		return;
+	}
+
+	if (!Brush.GetResourceObject())
+	{
+		ErrorState = INVTEXT("Current image doesn't have a valid texture assigned");
+		return;
+	}
+
+	CurrentData = CurrentImage->GetBrush();
+	CurrentData.DrawAs = ESlateBrushDrawType::Image;
+	ErrorState.Reset();
 }
 
 #undef LOCTEXT_NAMESPACE

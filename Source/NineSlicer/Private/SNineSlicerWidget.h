@@ -38,11 +38,14 @@ public:
 	 * Destructor called when the widget is deleted
 	 */
 	virtual ~SNineSlicerWidget() override;
-
 	/**
 	 * Reset the current image's margins to the default value
 	 */
 	void ResetMargins();
+	/**
+	 * Returns the current error state of the nine slicer widget
+	 */
+	TOptional<FText> GetErrorState() const { return ErrorState; }
 
 private:
 	/**
@@ -104,6 +107,10 @@ private:
 	 */
 	TOptional<EMouseCursor::Type> ComputeCursor() const;
 	/**
+	 * Checks for updates in the currently selected brush and updates the mirroring or the error state
+	 */
+	void UpdateBrushAndState();
+	/**
 	 * Owner UMG blueprint editor instance
 	 */
 	TWeakPtr<FWidgetBlueprintEditor> WeakBlueprintEditor;
@@ -115,6 +122,10 @@ private:
 	 * Handle that's currently grabbed with the mouse
 	 */
 	TOptional<EHandlePosition> HandleEdited;
+	/**
+	 * Setup error of the currently image, if any
+	 */
+	TOptional<FText> ErrorState;
 	/**
 	 * Main canvas containing the Image edited and the draggable handles
 	 */
