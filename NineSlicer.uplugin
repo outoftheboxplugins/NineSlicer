@@ -7,9 +7,9 @@
 	"Category": "Editor",
 	"CreatedBy": "Out-of-the-Box Plugins",
 	"CreatedByURL": "https://outofthebox-plugins.com",
-	"DocsURL": "",
-	"MarketplaceURL": "",
-	"SupportURL": "",
+	"DocsURL": "https://outofthebox-plugins.notion.site/Nine-Slicer-b7e5827be07c4b54b1f4b0a208ebaece",
+	"MarketplaceURL": "com.epicgames.launcher://ue/marketplace/content/97c1c5df6ab74f949ce4a01cacefc83f",
+	"SupportURL": "https://discord.gg/2cD5MwB",
 	"EnabledByDefault": true,
 	"CanContainContent": false,
 	"Modules": [
