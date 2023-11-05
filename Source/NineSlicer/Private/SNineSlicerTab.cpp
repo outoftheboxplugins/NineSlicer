@@ -89,9 +89,9 @@ void SNineSlicerTab::Construct(const FArguments& InArgs, const TWeakPtr<FWidgetB
 			.AutoHeight()
 			[
 				SNew(STextBlock)
-				.Text_Lambda([=](){ return NineSlicerWidget->GetErrorState().Get(FText::GetEmpty()); })
+				.Text_Lambda([=, this](){ return NineSlicerWidget->GetErrorState().Get(FText::GetEmpty()); })
 				.Justification(ETextJustify::Center)
-				.Visibility_Lambda([=](){ return NineSlicerWidget->GetErrorState().IsSet() ? EVisibility::Visible : EVisibility::Collapsed; })
+				.Visibility_Lambda([=, this](){ return NineSlicerWidget->GetErrorState().IsSet() ? EVisibility::Visible : EVisibility::Collapsed; })
 			]
 
 			+ SVerticalBox::Slot()

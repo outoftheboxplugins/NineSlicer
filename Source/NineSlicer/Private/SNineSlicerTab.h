@@ -13,6 +13,9 @@ public:
 	SLATE_BEGIN_ARGS(SNineSlicerTab) {}
 	SLATE_END_ARGS()
 
+	/**
+	 * Creates the tab containing the NineSlicer widget and the shortcut controls
+	 */
 	void Construct(const FArguments& InArgs, const TWeakPtr<FWidgetBlueprintEditor>& InBlueprintEditor);
 
 private:
