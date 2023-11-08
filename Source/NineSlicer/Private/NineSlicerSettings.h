@@ -30,4 +30,9 @@ public:
 	 */
 	UPROPERTY(Config, EditAnywhere, Category = "Nine Slicer", meta = (UIMin = "0", UIMax = "10"))
 	int32 DecimalPrecision = 2;
+	/**
+	 * Changes the size of the draggable handle inside the preview window
+	 */
+	UPROPERTY(Config, EditAnywhere, Category = "Nine Slicer")
+	float HandleSize = 10.0f;
 };

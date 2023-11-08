@@ -81,13 +81,21 @@ void SNineSlicerWidget::ResetMargins()
 
 void SNineSlicerWidget::AddMarginHandle(EHandlePosition Handle)
 {
+	auto ComputeSize = [=, this]()
+	{
+		const UNineSlicerSettings* Settings = GetDefault<UNineSlicerSettings>();
+
+		const FVector2D HandleSize = FVector2D::One() * Settings->HandleSize;
+		return FVector2D::One() / GetCachedGeometry().Scale * HandleSize;
+	};
+
 	// clang-format off
 	SCanvas::FScopedWidgetSlotArguments NewSlot = ViewCanvas->AddSlot();
 	NewSlot
-		.Size(FVector2D(1, 1))
+		.Size_Lambda(ComputeSize)
 		.Position_Lambda( [=, this]()
 			{
-				const FVector2D Offset = FVector2D (0.5, 0.5);
+				const FVector2D Offset = ComputeSize() / 2;
 
 				const FVector2D Coords = GetHandlePosition(Handle);
 				const FVector2D CanvasSize = ViewCanvas->GetCachedGeometry().GetLocalSize();
