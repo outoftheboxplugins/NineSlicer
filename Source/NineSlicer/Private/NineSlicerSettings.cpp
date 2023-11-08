@@ -11,3 +11,26 @@ void UNineSlicerSettings::OpenSettings()
 	ISettingsModule& SettingsModule = FModuleManager::LoadModuleChecked<ISettingsModule>("Settings");
 	SettingsModule.ShowViewer(Settings->GetContainerName(), Settings->GetCategoryName(), Settings->GetSectionName());
 }
+
+FName UNineSlicerSettings::GetContainerName() const
+{
+	return TEXT("Editor");
+}
+
+FName UNineSlicerSettings::GetCategoryName() const
+{
+	return TEXT("Out-of-the-Box Plugins");
+}
+
+FName UNineSlicerSettings::GetSectionName() const
+{
+	return TEXT("Nine Slicer");
+}
+
+#if WITH_EDITOR
+FText UNineSlicerSettings::GetSectionText() const
+{
+	const FName DisplaySectionName = GetSectionName();
+	return FText::FromName(DisplaySectionName);
+}
+#endif

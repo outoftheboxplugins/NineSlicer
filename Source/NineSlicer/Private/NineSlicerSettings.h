@@ -35,4 +35,14 @@ public:
 	 */
 	UPROPERTY(Config, EditAnywhere, Category = "Nine Slicer")
 	float HandleSize = 10.0f;
+
+private:
+	// Begin UDeveloperSettings interface
+	virtual FName GetContainerName() const override;
+	virtual FName GetCategoryName() const override;
+	virtual FName GetSectionName() const override;
+#if WITH_EDITOR
+	virtual FText GetSectionText() const override;
+#endif
+	// End UDeveloperSettings interface
 };
