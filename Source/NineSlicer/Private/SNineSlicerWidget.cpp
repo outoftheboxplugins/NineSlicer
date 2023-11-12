@@ -354,6 +354,10 @@ void SNineSlicerWidget::OnPreTick(float DeltaTime)
 	{
 		FSlateApplication::Get().GetPlatformCursor()->SetType(CursorType.GetValue());
 	}
+	else
+	{
+		FSlateApplication::Get().QueryCursor();
+	}
 }
 
 TOptional<EMouseCursor::Type> SNineSlicerWidget::ComputeCursor() const
